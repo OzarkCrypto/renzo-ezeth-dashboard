@@ -38,6 +38,19 @@ const hex = (h: string | null) => h && h !== '0x' ? parseInt(h, 16) : 0;
 const toEth = (w: number) => w / 1e18;
 const fmt = (n: number, d = 2) => n >= 1e6 ? (n/1e6).toFixed(d)+'M' : n >= 1e3 ? (n/1e3).toFixed(d)+'K' : n.toFixed(d);
 const addr = (a: string) => a.slice(0,6) + '...' + a.slice(-4);
+const etherscan = (address: string) => `https://etherscan.io/address/${address}`;
+const etherscanRead = (address: string) => `https://etherscan.io/address/${address}#readContract`;
+
+// Linked value component
+function LinkedValue({ value, href, unit, color = "text-gray-900" }: { value: string; href: string; unit?: string; color?: string }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" 
+       className={`${color} hover:underline decoration-dotted underline-offset-2 cursor-pointer`}
+       title="Click to verify on Etherscan">
+      {value}{unit && <span className="text-gray-500 text-xs ml-1">{unit}</span>}
+    </a>
+  );
+}
 
 interface DashboardData {
   supply: number;
@@ -125,10 +138,13 @@ export default function Dashboard() {
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">R</div>
+            <a href={etherscan(CONTRACTS.EZETH_TOKEN)} target="_blank" rel="noopener noreferrer"
+               className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-sm hover:bg-emerald-600 transition">
+              R
+            </a>
             <div>
               <h1 className="text-lg font-bold text-gray-900">Renzo ezETH</h1>
-              <p className="text-xs text-gray-400">On-Chain Dashboard</p>
+              <p className="text-xs text-gray-400">On-Chain Dashboard · <span className="text-blue-500">click values to verify</span></p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -137,21 +153,64 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Core Metrics with Links */}
         <div className="grid grid-cols-4 gap-3 mb-4">
-          {[
-            { l: 'Supply', v: fmt(data.supply), u: 'ezETH', c: 'text-emerald-600' },
-            { l: 'TVL', v: fmt(data.tvl), u: 'ETH', c: 'text-blue-600' },
-            { l: 'Rate', v: data.rate.toFixed(4), u: 'ETH/ezETH', c: 'text-amber-600' },
-            { l: 'Validators', v: fmt(data.validators, 0), u: '~est', c: 'text-purple-600' }
-          ].map((m, i) => (
-            <div key={i} className="bg-gray-50 rounded-lg p-3">
-              <p className="text-xs text-gray-500">{m.l}</p>
-              <p className="text-xl font-bold">{m.v}</p>
-              <p className={`text-xs ${m.c}`}>{m.u}</p>
-            </div>
-          ))}
+          <div className="bg-gray-50 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">
+              <a href={etherscanRead(CONTRACTS.EZETH_TOKEN)} target="_blank" rel="noopener noreferrer" className="hover:text-blue-500">
+                Supply ↗
+              </a>
+            </p>
+            <p className="text-xl font-bold">
+              <LinkedValue value={fmt(data.supply)} href={etherscanRead(CONTRACTS.EZETH_TOKEN)} />
+            </p>
+            <p className="text-xs text-emerald-600">
+              <a href={etherscan(CONTRACTS.EZETH_TOKEN)} target="_blank" rel="noopener noreferrer" className="hover:underline">ezETH</a>
+            </p>
+          </div>
+          
+          <div className="bg-gray-50 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">
+              <a href={etherscanRead(CONTRACTS.RESTAKE_MANAGER)} target="_blank" rel="noopener noreferrer" className="hover:text-blue-500">
+                TVL ↗
+              </a>
+            </p>
+            <p className="text-xl font-bold">
+              <LinkedValue value={fmt(data.tvl)} href={etherscanRead(CONTRACTS.RESTAKE_MANAGER)} />
+            </p>
+            <p className="text-xs text-blue-600">
+              <a href={etherscan(CONTRACTS.RESTAKE_MANAGER)} target="_blank" rel="noopener noreferrer" className="hover:underline">ETH</a>
+            </p>
+          </div>
+          
+          <div className="bg-gray-50 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">
+              <a href={etherscanRead(CONTRACTS.RATE_PROVIDER)} target="_blank" rel="noopener noreferrer" className="hover:text-blue-500">
+                Rate ↗
+              </a>
+            </p>
+            <p className="text-xl font-bold">
+              <LinkedValue value={data.rate.toFixed(4)} href={etherscanRead(CONTRACTS.RATE_PROVIDER)} />
+            </p>
+            <p className="text-xs text-amber-600">
+              <a href={etherscan(CONTRACTS.RATE_PROVIDER)} target="_blank" rel="noopener noreferrer" className="hover:underline">ETH/ezETH</a>
+            </p>
+          </div>
+          
+          <div className="bg-gray-50 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">
+              <a href="https://beaconcha.in/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-500">
+                Validators ↗
+              </a>
+            </p>
+            <p className="text-xl font-bold">
+              <LinkedValue value={fmt(data.validators, 0)} href="https://beaconcha.in/" />
+            </p>
+            <p className="text-xs text-purple-600">~est (32 ETH each)</p>
+          </div>
         </div>
 
+        {/* Distribution with Links */}
         <div className="bg-gray-50 rounded-lg p-4 mb-4">
           <p className="text-xs text-gray-500 mb-2">Fund Distribution</p>
           <div className="h-6 rounded-full overflow-hidden flex bg-gray-200 mb-3">
@@ -161,40 +220,99 @@ export default function Dashboard() {
             <div className="bg-purple-500" style={{ width: `${Math.max(data.dist.deposit, 0.5)}%` }}></div>
           </div>
           <div className="grid grid-cols-4 gap-2 text-xs">
-            {[
-              { l: 'Beacon Chain', v: data.beacon, p: data.dist.beacon, c: 'bg-emerald-500' },
-              { l: 'Withdraw Queue', v: data.withdrawQ, p: data.dist.withdraw, c: 'bg-amber-500' },
-              { l: 'EigenPods', v: data.totalPods, p: data.dist.pods, c: 'bg-blue-500' },
-              { l: 'Deposit Queue', v: data.depositQ, p: data.dist.deposit, c: 'bg-purple-500' }
-            ].map((d, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-sm ${d.c}`}></div>
-                <div>
-                  <p className="text-gray-500">{d.l}</p>
-                  <p className="font-semibold text-gray-900">{fmt(d.v)} <span className="text-gray-400">({d.p.toFixed(1)}%)</span></p>
-                </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-sm bg-emerald-500"></div>
+              <div>
+                <p className="text-gray-500">
+                  <a href="https://beaconcha.in/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-500">Beacon Chain ↗</a>
+                </p>
+                <p className="font-semibold">
+                  <LinkedValue value={fmt(data.beacon)} href="https://beaconcha.in/" color="text-gray-900" />
+                  <span className="text-gray-400 ml-1">({data.dist.beacon.toFixed(1)}%)</span>
+                </p>
               </div>
-            ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-sm bg-amber-500"></div>
+              <div>
+                <p className="text-gray-500">
+                  <a href={etherscan(CONTRACTS.WITHDRAW_QUEUE)} target="_blank" rel="noopener noreferrer" className="hover:text-blue-500">Withdraw Queue ↗</a>
+                </p>
+                <p className="font-semibold">
+                  <LinkedValue value={fmt(data.withdrawQ)} href={etherscan(CONTRACTS.WITHDRAW_QUEUE)} color="text-gray-900" />
+                  <span className="text-gray-400 ml-1">({data.dist.withdraw.toFixed(1)}%)</span>
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-sm bg-blue-500"></div>
+              <div>
+                <p className="text-gray-500">EigenPods</p>
+                <p className="font-semibold">
+                  {fmt(data.totalPods)} <span className="text-gray-400">({data.dist.pods.toFixed(2)}%)</span>
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-sm bg-purple-500"></div>
+              <div>
+                <p className="text-gray-500">
+                  <a href={etherscan(CONTRACTS.DEPOSIT_QUEUE)} target="_blank" rel="noopener noreferrer" className="hover:text-blue-500">Deposit Queue ↗</a>
+                </p>
+                <p className="font-semibold">
+                  <LinkedValue value={fmt(data.depositQ)} href={etherscan(CONTRACTS.DEPOSIT_QUEUE)} color="text-gray-900" />
+                  <span className="text-gray-400 ml-1">({data.dist.deposit.toFixed(2)}%)</span>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* Stats Row with Links */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
-            <p className="text-xs text-amber-600 mb-1">Withdrawal</p>
+            <p className="text-xs text-amber-600 mb-1">
+              <a href={etherscanRead(CONTRACTS.WITHDRAW_QUEUE)} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                Withdrawal ↗
+              </a>
+            </p>
             <div className="flex justify-between">
-              <div><p className="text-lg font-bold">{data.cooldown}d</p><p className="text-xs text-gray-500">cooldown</p></div>
-              <div className="text-right"><p className="text-lg font-bold">{data.requests.toLocaleString()}</p><p className="text-xs text-gray-500">requests</p></div>
+              <div>
+                <p className="text-lg font-bold">
+                  <LinkedValue value={`${data.cooldown}d`} href={etherscanRead(CONTRACTS.WITHDRAW_QUEUE)} />
+                </p>
+                <p className="text-xs text-gray-500">cooldown</p>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-bold">
+                  <LinkedValue value={data.requests.toLocaleString()} href={etherscanRead(CONTRACTS.WITHDRAW_QUEUE)} />
+                </p>
+                <p className="text-xs text-gray-500">requests</p>
+              </div>
             </div>
           </div>
           <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
-            <p className="text-xs text-purple-600 mb-1">Staking</p>
+            <p className="text-xs text-purple-600 mb-1">
+              <a href="https://beaconcha.in/" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                Staking ↗
+              </a>
+            </p>
             <div className="flex justify-between">
-              <div><p className="text-lg font-bold">~{data.validators.toLocaleString()}</p><p className="text-xs text-gray-500">validators</p></div>
-              <div className="text-right"><p className="text-lg font-bold">{fmt(data.validators * 32)}</p><p className="text-xs text-gray-500">staked ETH</p></div>
+              <div>
+                <p className="text-lg font-bold">
+                  <LinkedValue value={`~${data.validators.toLocaleString()}`} href="https://beaconcha.in/" />
+                </p>
+                <p className="text-xs text-gray-500">validators</p>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-bold">{fmt(data.validators * 32)}</p>
+                <p className="text-xs text-gray-500">staked ETH</p>
+              </div>
             </div>
           </div>
         </div>
 
+        {/* Operators with Links */}
         <div className="bg-gray-50 rounded-lg p-4 mb-4">
           <p className="text-xs text-gray-500 mb-2">Operator Delegators</p>
           <table className="w-full text-sm">
@@ -211,32 +329,38 @@ export default function Dashboard() {
                 <tr key={i} className="border-b border-gray-100 last:border-0">
                   <td className="py-2 font-medium">{o.name}</td>
                   <td className="py-2">
-                    <a href={`https://etherscan.io/address/${o.od}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-mono text-xs">{addr(o.od)}</a>
+                    <a href={etherscan(o.od)} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-mono text-xs">{addr(o.od)}</a>
                   </td>
                   <td className="py-2">
-                    <a href={`https://etherscan.io/address/${o.pod}`} target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:underline font-mono text-xs">{addr(o.pod)}</a>
+                    <a href={etherscan(o.pod)} target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:underline font-mono text-xs">{addr(o.pod)}</a>
                   </td>
-                  <td className="py-2 text-right font-mono text-xs">{o.bal.toFixed(4)} ETH</td>
+                  <td className="py-2 text-right">
+                    <a href={etherscan(o.pod)} target="_blank" rel="noopener noreferrer" className="font-mono text-xs hover:underline">
+                      {o.bal.toFixed(4)} ETH
+                    </a>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
+        {/* Contracts */}
         <div className="bg-gray-50 rounded-lg p-4">
-          <p className="text-xs text-gray-500 mb-2">Contracts</p>
+          <p className="text-xs text-gray-500 mb-2">Contracts (click to verify)</p>
           <div className="grid grid-cols-2 gap-2 text-xs">
             {Object.entries(CONTRACTS).map(([k, v]) => (
               <div key={k} className="flex justify-between items-center py-1">
                 <span className="text-gray-500">{k.replace(/_/g, ' ')}</span>
-                <a href={`https://etherscan.io/address/${v}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-mono">{addr(v)}</a>
+                <a href={etherscan(v)} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-mono">{addr(v)}</a>
               </div>
             ))}
           </div>
         </div>
 
+        {/* Footer */}
         <div className="mt-4 text-center text-xs text-gray-400">
-          Data from Ethereum RPC · 
+          <p className="mb-1">All data fetched directly from Ethereum RPC · Click any value to verify source</p>
           <a href="https://etherscan.io/token/0xbf5495Efe5DB9ce00f80364C8B423567e58d2110" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline ml-1">Etherscan</a> · 
           <a href="https://defillama.com/protocol/renzo" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline ml-1">DefiLlama</a> · 
           <a href="https://dune.com/renzoprotocol/renzo" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline ml-1">Dune</a>
